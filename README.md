@@ -18,25 +18,31 @@ The system integrates with a Python-based ABAC engine and demonstrates how crypt
 ## Technologies & Libraries Used
 ### 1. python-gnupg
 Used for:
-Generating and managing PGP keys
-Parsing certificates
-Extracting UID information
-Checking expiration and revocation
+- Generating and managing PGP keys
+- Parsing certificates
+- Extracting UID information
+- Checking expiration and revocation
+  
 Why needed:
 PGP provides cryptographic identity binding and decentralized trust without requiring centralized identity providers.
 
 ### 2. py-abac
 Used as the ABAC engine:
-Evaluates policies
-Supports custom Attribute Providers (PIP integration)
-Implements XACML-inspired PDP logic
+- Evaluates policies
+- Supports custom Attribute Providers (PIP integration)
+- Implements XACML-inspired PDP logic
+  
 Why needed:
 Provides a structured Policy Decision Point where attributes can be dynamically resolved via custom PIP logic.
 
 ### 3. PyJWT
 Used for:
-Creating JSON Web Tokens containing extracted attributes
-Signing attribute claims
-Supporting secure attribute transport
+- Creating JSON Web Tokens containing extracted attributes
+- Signing attribute claims
+- Supporting secure attribute transport
+  
 Why needed:
 JWT provides a compact, standardized representation of attribute claims, allowing separation between identity verification and authorization enforcement.
+
+
+
