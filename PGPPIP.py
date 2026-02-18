@@ -28,8 +28,26 @@ PIP_public_pem = PIP_public_key.public_bytes( #pem version of public key
 gpg = gnupg.GPG(gnupghome="/Users/virwadwani/gnupgHome/gnupg_test",
                 options=["--pinentry-mode", "loopback"])
 
-fingerprint = "11F280405AEFFB70F72750CA6AD756CEECE2FF14"
+fingerprint = "EE97CE68DEC613FA8C5BD9EDEDDB5721106F3554"
 
+# Verify PGP key
+def verify_pgp(fingerprint):
+    keys = gpg.list_keys(keys=[fingerprint])
+
+    if not keys[0]:
+        return False
+    
+    if keys[0]['expires'] and int(keys[0]['expires']) < int(time.time()):
+        return False
+    
+    #Add code for revocation check
+
+    #Add code for signature verification
+
+
+    return True
+
+# Extracting attributes
 def getAttributes(fingerprint):
     attributes = {}
     keys = gpg.list_keys(keys=[fingerprint])
@@ -47,7 +65,10 @@ def getAttributes(fingerprint):
     
         return attributes
 
-attributes = getAttributes(fingerprint)
+if verify_pgp(fingerprint): #To verify key before extracting attributes
+    attributes = getAttributes(fingerprint)
+else:
+    print("Key not verified!")
 
 ## JWT encoding
 
@@ -64,8 +85,9 @@ def create_jwt(fingerprint, attributes, private_key_pem):
     token = jwt.encode(payload, private_key_pem, algorithm="RS256")
     return token
 
-jwt_attributes = create_jwt(fingerprint, attributes, PIP_private_pem)
-print(jwt_attributes)
+if attributes:
+    jwt_attributes = create_jwt(fingerprint, attributes, PIP_private_pem)
+    print(jwt_attributes)
 
 # For verifying and extracting information from JWT - ideally done on PDP side
 def decode_jwt(token, public_key_pem):
@@ -73,4 +95,5 @@ def decode_jwt(token, public_key_pem):
     return decoded_jwt
 
 print()
-print(decode_jwt(jwt_attributes, PIP_public_pem))
+if jwt_attributes:
+    print(decode_jwt(jwt_attributes, PIP_public_pem))

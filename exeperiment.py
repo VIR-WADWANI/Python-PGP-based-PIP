@@ -9,8 +9,8 @@ input_data = gpg.gen_key_input(
     key_type="RSA", 
     key_length=2048,
     passphrase = "123456",
-    name_comment= "roles=ceo;permissions=all",
-    vir = "hani"
+    name_comment= "role=employee;department=admin",
+    expire_date= "1d",
     )
 
 key = gpg.gen_key(input_data)
@@ -45,17 +45,18 @@ print()
 print()
 
 keys = gpg.list_keys()
+print(keys)
 
 '''for key in keys:
     for uid in key['uids']:
         print(uid)
-    print(key['type'])'''
-
+    print(key['type'])
+'''
 '''for key in keys:
     gpg.delete_keys(key['fingerprint'], secret=True, passphrase = "123456")
     gpg.delete_keys(key['fingerprint'])'''
 
-# Generating Extra Names without generating a new key:
+'''# Generating Extra Names without generating a new key:
 # Fingerprint of the key you want to modify
 key_fingerprint = 'YOUR_KEY_FINGERPRINT_HERE'
 
@@ -69,4 +70,4 @@ cmd = f'adduid\n{new_user_id}\n\n1\nsave\nquit'
 # Use edit_key with extra arguments to send the commands
 result = gpg.submit_keys(key_fingerprint, cmd)
 
-print(result.status)
+print(result.status)'''
