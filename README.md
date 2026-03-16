@@ -8,12 +8,11 @@ The system integrates with a Python-based ABAC engine and demonstrates how crypt
 ## Project Goals
 - Verify and validate PGP public keys
 - Extract structured attributes embedded in PGP UID fields
-- Convert extracted attributes into structured claims (optionally JWT)
 - Provide those attributes to an ABAC PDP as a PIP
 - Support validation checks such as:
-- Signature integrity
-- Expiry
-- Revocation status
+-- Signature integrity
+-- Expiry
+-- Revocation status
 
 ## Technologies & Libraries Used
 ### 1. python-gnupg
