@@ -38,7 +38,7 @@ class PGPPIP(AttributeProvider):
         return True
 
     # Extracting attributes
-    def get_attribute_value(self, ctx, attribute_path):
+    def get_attribute_value(self, ace, attribute_path, ctx):
         """
         ace: subject/resource/action/context
         attribute_path: e.g. "$.role"
@@ -49,7 +49,8 @@ class PGPPIP(AttributeProvider):
         print()
         print("attribute rquested:", attribute_path)
 
-        fingerprint = ctx.get_attribute_value("Subject", "$.attributes.fingerprint")
+        fingerprint = ctx.get_attribute_value("subject", "$.fingerprint")
+        print("fingerprint: ", fingerprint)
 
         keys = self.gpg.list_keys(keys=[fingerprint])
         if not keys:
@@ -61,7 +62,7 @@ class PGPPIP(AttributeProvider):
             return None
         
         #Verifying the key before extracting attributes
-        if not self.verify_pgp(self, fingerprint):
+        if not self.verify_pgp(fingerprint):
             print("Certificate verification failure!")
             return None
         
@@ -74,7 +75,7 @@ class PGPPIP(AttributeProvider):
             print("JWT Error:", e)
             return None
         
-        if attributes['expiry'] and attributes['expiry'] > int(time.time()):
+        if attributes['expiry'] and attributes['expiry'] < int(time.time()):
             print("JWT token expired!")
             return None
         

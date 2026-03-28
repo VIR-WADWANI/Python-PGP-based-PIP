@@ -34,7 +34,7 @@ def create_jwt(token_subject, attributes, private_key_pem):
         "sub": token_subject,
         "iss": "SoA", #issuer
         "iat": int(time.time()), #issued at time
-        "expiry": int(time.time() + 300), #Expiry time, set to 5 minutes from issuing
+        "expiry": int(time.time() + 3600), #Expiry time, set to 60 minutes from issuing
         "aud": "pip"
     }
 
@@ -99,8 +99,8 @@ for key in keys:
 
 '''for key in keys:
     gpg.delete_keys(key['fingerprint'], secret=True, passphrase = "123456")
-    gpg.delete_keys(key['fingerprint'])
-'''
+    gpg.delete_keys(key['fingerprint'])'''
+
 '''# Generating Extra Names without generating a new key:
 # Fingerprint of the key you want to modify
 key_fingerprint = 'YOUR_KEY_FINGERPRINT_HERE'
