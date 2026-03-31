@@ -2,13 +2,16 @@ import gnupg
 import re
 import jwt
 import time
+import subprocess
 from py_abac.provider.base import AttributeProvider
+
 
 class PGPPIP(AttributeProvider):
 
-    def __init__(self, gpg_home, public_key_path):
+    def __init__(self, gpg_home, public_key_path, trusted_signers):
         print("[PGPPIP] Initializing PIP ...")
         self.gpg = gnupg.GPG(gnupghome=gpg_home, options=["--pinentry-mode", "loopback"])
+        self.trusted_signers = trusted_signers
 
         # Getting the SoA public key pem from the .pem file
         with open(public_key_path, "rb") as f:
@@ -16,26 +19,55 @@ class PGPPIP(AttributeProvider):
 
     #jwt_fields = ['sub', 'iss', 'iat', 'expiry', 'aud', 'nbf', 'jti']
 
-    '''gpg = gnupg.GPG(gnupghome="/Users/virwadwani/gnupgHome/gnupg_test",
-                    options=["--pinentry-mode", "loopback"])'''
-    
-    #fingerprint = "D031FE189631DB147B774C24B5699E4D4496B14A" 
+    #gpg = gnupg.GPG(gnupghome="/Users/virwadwani/gnupgHome/gnupg_test",
+    #               options=["--pinentry-mode", "loopback"])
 
+    def get_signers(self, fingerprint):
+        #subprocess.run("export GNUPGHOME=/Users/virwadwani/gnupgHome/gnupg_test", shell=True)
+        res = subprocess.run(["gpg", "--list-sigs","--with-colons", fingerprint],capture_output=True,text=True)
+        print("result subprocess:",res)
+
+        signers = []
+        for r in res.stdout.splitlines():
+            print()
+            print(r)
+            if r.startswith("sig"):
+                signers.append(r.split(":")[4])
+
+        return signers
+    
     # Verify PGP key
     def verify_pgp(self, fingerprint):
         keys = self.gpg.list_keys(keys=[fingerprint])
 
+        #Checking if key exists
         if not keys[0]:
             return False
         
+        #Checking key expiry
         if keys[0]['expires'] and int(keys[0]['expires']) < int(time.time()):
             return False
         
         #Add code for revocation check
 
-        #Add code for signature verification
+        #Verifying Key signatures
+        cert_signers = self.get_signers(fingerprint)
 
-        return True
+        if not cert_signers:
+            return False
+        
+        trust_count = 0
+        for signer in cert_signers:
+            print()
+            print(signer)
+            if signer in self.trusted_signers:
+                trust_count+=1
+
+        if trust_count >= 1:
+            print("KEY VERIFIED!!")
+            return True
+        
+        return False
 
     # Extracting attributes
     def get_attribute_value(self, ace, attribute_path, ctx):

@@ -23,7 +23,8 @@ policy = {
 storage.add(Policy.from_json(policy))
 
 #Creating the PIP to be used, that uses the PGPPIP class
-pip = PGPPIP(gpg_home="/Users/virwadwani/gnupgHome/gnupg_test", public_key_path="SoA_public_pem.pem")
+pip = PGPPIP(gpg_home="/Users/virwadwani/gnupgHome/gnupg_test", public_key_path="SoA_public_pem.pem",
+            trusted_signers=["9458FC85A299E808","F08FFDE500C0D7DD"])
 
 #Creating the pdp - sets the attribute_providers list to only contain the pip we created
 pdp = PDP(storage, EvaluationAlgorithm.HIGHEST_PRIORITY, providers=[pip])
@@ -33,7 +34,7 @@ req = {
     "subject" : {
         "id" : "employee1",
         "attributes" : {
-            "fingerprint" : "BA36CE47A908C36AD6F700D707C4A5243D3130AE"
+            "fingerprint" : "1529B8E60723C3E7C097CA2AFF767C187F6395DC"
         }
     },
     "resource" : {"id" : "resource1"},
