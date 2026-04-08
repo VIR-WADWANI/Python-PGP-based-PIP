@@ -9,7 +9,7 @@ from py_abac.provider.base import AttributeProvider
 class PGPPIP(AttributeProvider):
 
     def __init__(self, gpg_home, public_key_path, trusted_signers):
-        print("[PGPPIP] Initializing PIP ...")
+        #print("[PGPPIP] Initializing PIP ...")
         self.gpg = gnupg.GPG(gnupghome=gpg_home, options=["--pinentry-mode", "loopback"])
         self.trusted_signers = trusted_signers
 
@@ -25,12 +25,12 @@ class PGPPIP(AttributeProvider):
     def get_signers(self, fingerprint):
         #subprocess.run("export GNUPGHOME=/Users/virwadwani/gnupgHome/gnupg_test", shell=True)
         res = subprocess.run(["gpg", "--list-sigs","--with-colons", fingerprint],capture_output=True,text=True)
-        print("result subprocess:",res)
+        #print("result subprocess:",res)
 
         signers = []
         for r in res.stdout.splitlines():
-            print()
-            print(r)
+            #print()
+            #print(r)
             if r.startswith("sig"):
                 signers.append(r.split(":")[4])
 
@@ -42,6 +42,10 @@ class PGPPIP(AttributeProvider):
 
         #Checking if key exists
         if not keys[0]:
+            return False
+        
+        if not keys[0]['uids']:
+            print("UID not found!!")
             return False
         
         #Checking key expiry
@@ -58,13 +62,13 @@ class PGPPIP(AttributeProvider):
         
         trust_count = 0
         for signer in cert_signers:
-            print()
-            print(signer)
+            #print()
+            #print(signer)
             if signer in self.trusted_signers:
                 trust_count+=1
 
         if trust_count >= 1:
-            print("KEY VERIFIED!!")
+            #print("KEY VERIFIED!!")
             return True
         
         return False
@@ -76,22 +80,16 @@ class PGPPIP(AttributeProvider):
         attribute_path: e.g. "$.role"
         ctx: evaluation context
         """
+        start = time.time()
 
-        print("This is the ctx:", ctx)
-        print()
-        print("attribute rquested:", attribute_path)
+        #print("This is the ctx:", ctx)
+        #print()
+        #print("attribute rquested:", attribute_path)
 
         fingerprint = ctx.get_attribute_value("subject", "$.fingerprint")
-        print("fingerprint: ", fingerprint)
+        #print("fingerprint: ", fingerprint)
 
         keys = self.gpg.list_keys(keys=[fingerprint])
-        if not keys:
-            print("key not found!!")
-            return None
-
-        if not keys[0]['uids']:
-            print("UID not found!!")
-            return None
         
         #Verifying the key before extracting attributes
         if not self.verify_pgp(fingerprint):
@@ -113,7 +111,9 @@ class PGPPIP(AttributeProvider):
         
         req_attr = attribute_path.replace("$.", "")
 
-        print("Attributes:", attributes)
+        #print("Attributes:", attributes)
+        end = time.time()
+        print("pip time:", end - start)
         return attributes.get(req_attr)
     
     #Testing

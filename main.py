@@ -1,3 +1,4 @@
+import time
 from py_abac import PDP, Policy, Request
 from py_abac.storage.memory import MemoryStorage
 from py_abac import EvaluationAlgorithm
@@ -13,8 +14,8 @@ policy = {
     "description" : "Employees from admin department can access resource",
     "effect" : "allow",
     "rules" : {
-        "subject" : {"$.department" : {"condition" : "Equals", "value" : "admin"}}
-        #{"$.role" : {"condition" : "Equals", "value" : "employee"}}
+        "subject" : #{"$.department" : {"condition" : "Equals", "value" : "admin"}}
+        {"$.role" : {"condition" : "Equals", "value" : "employee"}}
     },
     "targets" : {},
     "priority" : 0
@@ -34,7 +35,7 @@ req = {
     "subject" : {
         "id" : "employee1",
         "attributes" : {
-            "fingerprint" : "1529B8E60723C3E7C097CA2AFF767C187F6395DC"
+            "fingerprint" : "729175D76FDBEB1A3D5E024BE2FCFAA28898484C"
         }
     },
     "resource" : {"id" : "resource1"},
@@ -45,7 +46,17 @@ req = {
 request = Request.from_json(req)
 
 
-#Doing the pdp evaluation
+#Doing the pdp evaluation - time
+'''times = []
+for i in range(10):
+    start = time.time()
+    decision = pdp.is_allowed(request)
+    end = time.time()
+    times.append(end - start)
+#print("Decision:", decision)
+print("avg time:", sum(times)/len(times))
+'''
+#Doing PDP evaluation
 decision = pdp.is_allowed(request)
 print("Decision:", decision)
 
