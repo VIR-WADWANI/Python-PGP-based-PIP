@@ -1,3 +1,7 @@
+
+#Custom PIP
+#Receives fingerprint from PDP, Validates the certificate, extracts attribute, and returns to PDP
+
 import gnupg
 import re
 import jwt
@@ -5,35 +9,35 @@ import time
 import subprocess
 from py_abac.provider.base import AttributeProvider
 
-
+#Creating the PGPPIP class that inherits the AttributeProvider class as required by py-abac
 class PGPPIP(AttributeProvider):
 
     def __init__(self, gpg_home, public_key_path, trusted_signers):
         self.gpg = gnupg.GPG(gnupghome=gpg_home, options=["--pinentry-mode", "loopback"])
         self.trusted_signers = trusted_signers
 
-        # Getting the SoA public key pem from the .pem file
+        # Getting the SoA public key pem from the .pem file which is required for decoding JWT
         with open(public_key_path, "rb") as f:
             self.SoA_public_pem = f.read()
 
+    # Returns all the signers of a certificate
     def get_signers(self, fingerprint):
+        # Uses subprocess to run terminal command to get the output of all signers
         res = subprocess.run(["gpg", "--homedir", "/Users/virwadwani/gnupgHome/gnupg_test", "--list-sigs","--with-colons", fingerprint],capture_output=True,text=True)
-        #print("result subprocess:",res)
 
+        # Parses the output to then extract just the signer keys
         signers = []
         for r in res.stdout.splitlines():
-            #print()
-            #print(r)
             if r.startswith("sig"):
                 signers.append(r.split(":")[4])
 
         return signers
     
-    # Verify PGP key
+    # Verify the PGP key
     def verify_pgp(self, fingerprint):
         keys = self.gpg.list_keys(keys=[fingerprint])
 
-        #Checking if key exists
+        # Checking if key exists
         if not keys:
             print("Key Not found!")
             return False
@@ -42,25 +46,23 @@ class PGPPIP(AttributeProvider):
             print("UID not found!!")
             return False
         
-        #Checking key expiry
+        # Checking key expiry
         if keys[0]['expires'] and int(keys[0]['expires']) < int(time.time()):
             return False
 
-        #Verifying Key signatures
+        # Verifying the signers of the key
         cert_signers = self.get_signers(fingerprint)
 
         if not cert_signers:
             return False
         
+        # Checking if more than 1 signer exists only then the certificate can be trusted
         trust_count = 0
         for signer in cert_signers:
-            #print()
-            #print(signer)
             if signer in self.trusted_signers:
                 trust_count+=1
 
         if trust_count >= 1:
-            #print("KEY VERIFIED!!")
             return True
         
         return False
@@ -72,22 +74,18 @@ class PGPPIP(AttributeProvider):
         attribute_path: e.g. "$.role"
         ctx: evaluation context
         """
-        #start = time.time()
-
-        #print("This is the ctx:", ctx)
-        #print()
-        #print("attribute rquested:", attribute_path)
-
+        #start = time.time()  # For timing evaluation
+        # Gets the fingerprint from the request context sent from PDP
         fingerprint = ctx.get_attribute_value("subject", "$.fingerprint")
-        #print("fingerprint: ", fingerprint)
 
         keys = self.gpg.list_keys(keys=[fingerprint])
         
-        #Verifying the key before extracting attributes
+        # Verifying the key before extracting attributes
         if not self.verify_pgp(fingerprint):
             print("Certificate verification failure!")
             return None
         
+        # Using regular expression to extract just the encoded JWT from the certificate
         uid = keys[0]['uids'][-1] #UID = Name (jwt_encoded_text = key=Val;key=val) email
         attr = re.search(r"\(([^)]+)\)", uid).group(1)
 
@@ -103,10 +101,11 @@ class PGPPIP(AttributeProvider):
         
         req_attr = attribute_path.replace("$.", "")
 
-        #print("Attributes:", attributes)
-        #end = time.time()
-        #print("pip time:", end - start)
+        #end = time.time() # For timing Evaluation
+        #print("pip time:", end - start) # For timing Evaluation
+
         if not attributes.get(req_attr):
             print("Attribute Not in Certificate!")
+            
         return attributes.get(req_attr)
     

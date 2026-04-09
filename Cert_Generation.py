@@ -1,10 +1,14 @@
+
+# Certificate Generator
+# Generates the PGP certificate in compatibly format with PIP by adding the attributes as a JWT
+
 import gnupg
 import jwt
 import time
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 
-## Generating RSA keys for PIP (currently acting as a Source of Authority for the access rights) - Different from GPG keys
+# Generating RSA keys for PIP (currently acting as a Source of Authority for the access rights) - Different from GPG keys
 # Acts as trust anchor to be able to encrypt and send JWT to PDP and PDP can verify
 # Need to convert the keys into PEM format as JWT only recogises that format and cannot directly use the key.
 
@@ -35,9 +39,10 @@ def create_jwt(token_subject, attributes, private_key_pem):
         "iss": "SoA", #issuer
         "iat": int(time.time()), #issued at time
         "expiry": int(time.time() + 3600), #Expiry time, set to 60 minutes from issuing
-        "aud": "pip"
+        "aud": "pip" #Audience set to pip so only the pip having the same aud can access
     }
 
+    # Adding the attributes to the payload of the JWT
     payload.update(attributes)
 
     token = jwt.encode(payload, private_key_pem, algorithm="RS256")
@@ -61,30 +66,7 @@ input_data = gpg.gen_key_input(
 key = gpg.gen_key(input_data)
 
 print(input_data)
-print("key id: ", key)
 print("PGP unique identifier (fingerprint): ", key.fingerprint)
-
-'''public_key = gpg.export_keys(key.fingerprint)
-print("Public key: ", public_key)
-
-private_key = gpg.export_keys(key.fingerprint, True, passphrase="123456")
-print("Private_key: ", private_key)
-
-signing = gpg.sign(
-    "This message is signed",
-    keyid = key.fingerprint,
-    passphrase = "123456"
-)
-print("signed data: ", str(signing))
-
-encrypt = gpg.encrypt(
-    "Vir is amazing",
-    recipients=[key.fingerprint]
-)
-print("encrypted message: ", str(encrypt))
-
-decrypt = gpg.decrypt(str(encrypt), passphrase = "123456")
-print("decrypted message: ", decrypt.data.decode())'''
 
 print()
 print()
@@ -92,27 +74,13 @@ print()
 keys = gpg.list_keys()
 #print(keys)
 
+# Print out all the UIDs of all keys in the GnuPGHome
 for key in keys:
     for uid in key['uids']:
         print(uid)
     print(key['type'])
 
+# Code for deleting all keys in the GnuPGHome
 '''for key in keys:
     gpg.delete_keys(key['fingerprint'], secret=True, passphrase = "123456")
     gpg.delete_keys(key['fingerprint'])'''
-
-'''# Generating Extra Names without generating a new key:
-# Fingerprint of the key you want to modify
-key_fingerprint = 'YOUR_KEY_FINGERPRINT_HERE'
-
-# Define the new user ID
-new_user_id = 'New Name <new.email@example.com>'
-
-# Commands to send to GPG
-# 'adduid' initiates the process, followed by the new ID, 'save', and 'quit'
-cmd = f'adduid\n{new_user_id}\n\n1\nsave\nquit'
-
-# Use edit_key with extra arguments to send the commands
-result = gpg.submit_keys(key_fingerprint, cmd)
-
-print(result.status)'''
