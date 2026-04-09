@@ -90,7 +90,7 @@ print()
 print()
 
 keys = gpg.list_keys()
-print(keys)
+#print(keys)
 
 for key in keys:
     for uid in key['uids']:

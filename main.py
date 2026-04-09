@@ -15,7 +15,8 @@ policy = {
     "effect" : "allow",
     "rules" : {
         "subject" : #{"$.department" : {"condition" : "Equals", "value" : "admin"}}
-        {"$.role" : {"condition" : "Equals", "value" : "employee"}}
+        #{"$.role" : {"condition" : "Equals", "value" : "employee"}}
+        {"$.location" : {"condition" : "Equals", "value" : "Dubai"}}
     },
     "targets" : {},
     "priority" : 0
@@ -35,7 +36,7 @@ req = {
     "subject" : {
         "id" : "employee1",
         "attributes" : {
-            "fingerprint" : "729175D76FDBEB1A3D5E024BE2FCFAA28898484C"
+            "fingerprint" : "0F5FCA67862A7D095C67E250F59620A1A0470B21"
         }
     },
     "resource" : {"id" : "resource1"},
@@ -59,12 +60,3 @@ print("avg time:", sum(times)/len(times))
 #Doing PDP evaluation
 decision = pdp.is_allowed(request)
 print("Decision:", decision)
-
-# Fake request context for testing
-'''class DummyContext:
-    def get_attribute_value(self, entity, path):
-        print(f"[DummyContext] get_attribute_value called for {path}")
-        return pip.get_attribute(path)
-
-ctx = DummyContext()
-print(ctx.get_attribute_value("subject", "$.role"))'''

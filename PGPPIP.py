@@ -9,7 +9,6 @@ from py_abac.provider.base import AttributeProvider
 class PGPPIP(AttributeProvider):
 
     def __init__(self, gpg_home, public_key_path, trusted_signers):
-        #print("[PGPPIP] Initializing PIP ...")
         self.gpg = gnupg.GPG(gnupghome=gpg_home, options=["--pinentry-mode", "loopback"])
         self.trusted_signers = trusted_signers
 
@@ -17,14 +16,8 @@ class PGPPIP(AttributeProvider):
         with open(public_key_path, "rb") as f:
             self.SoA_public_pem = f.read()
 
-    #jwt_fields = ['sub', 'iss', 'iat', 'expiry', 'aud', 'nbf', 'jti']
-
-    #gpg = gnupg.GPG(gnupghome="/Users/virwadwani/gnupgHome/gnupg_test",
-    #               options=["--pinentry-mode", "loopback"])
-
     def get_signers(self, fingerprint):
-        #subprocess.run("export GNUPGHOME=/Users/virwadwani/gnupgHome/gnupg_test", shell=True)
-        res = subprocess.run(["gpg", "--list-sigs","--with-colons", fingerprint],capture_output=True,text=True)
+        res = subprocess.run(["gpg", "--homedir", "/Users/virwadwani/gnupgHome/gnupg_test", "--list-sigs","--with-colons", fingerprint],capture_output=True,text=True)
         #print("result subprocess:",res)
 
         signers = []
@@ -41,7 +34,8 @@ class PGPPIP(AttributeProvider):
         keys = self.gpg.list_keys(keys=[fingerprint])
 
         #Checking if key exists
-        if not keys[0]:
+        if not keys:
+            print("Key Not found!")
             return False
         
         if not keys[0]['uids']:
@@ -51,8 +45,6 @@ class PGPPIP(AttributeProvider):
         #Checking key expiry
         if keys[0]['expires'] and int(keys[0]['expires']) < int(time.time()):
             return False
-        
-        #Add code for revocation check
 
         #Verifying Key signatures
         cert_signers = self.get_signers(fingerprint)
@@ -80,7 +72,7 @@ class PGPPIP(AttributeProvider):
         attribute_path: e.g. "$.role"
         ctx: evaluation context
         """
-        start = time.time()
+        #start = time.time()
 
         #print("This is the ctx:", ctx)
         #print()
@@ -112,12 +104,9 @@ class PGPPIP(AttributeProvider):
         req_attr = attribute_path.replace("$.", "")
 
         #print("Attributes:", attributes)
-        end = time.time()
-        print("pip time:", end - start)
+        #end = time.time()
+        #print("pip time:", end - start)
+        if not attributes.get(req_attr):
+            print("Attribute Not in Certificate!")
         return attributes.get(req_attr)
     
-    #Testing
-    def get_attribute(self, attribute_path, context=None):
-        print(f"[PGPPIP] get_attribute called for {attribute_path}")
-        # decode JWT or read PGP key here
-        return "role"  # just test
