@@ -43,5 +43,77 @@ Used for:
 Why needed:
 JWT provides a compact, standardized representation of attribute claims, allowing separation between identity verification and authorization enforcement.
 
+## Project Structure
+
+The project consists of three main files:
 
 
+### 1. `main.py`
+
+This is the **entry point** of the system.
+
+- Creates and configures the **Policy Decision Point (PDP)** using `py-abac`
+- Defines **access control policies** in JSON format
+- Constructs **requests** containing subject, resource, and action
+- Calls the PDP using `.is_allowed()` to evaluate requests
+- Automatically triggers the PIP when required attributes are missing
+- Produces a final **Permit/Deny decision**
+
+---
+
+### 2. `PGPPIP.py`
+
+This file contains the custom **Policy Information Point (PIP)** implementation.
+
+- Defines the `PGPPIP` class which **inherits from `AttributeProvider`**
+- Integrates with the `py-abac` PDP for dynamic attribute retrieval
+- Implements the required method:
+
+  ```python
+  get_attribute_value(attribute_path, ctx, ace)
+  ```
+  **Key Responsibilities:**
+  - Extract fingerprint from request context
+  - Retrieve PGP certificate using GnuPG
+  - Validate certificate:
+    - Check existence
+    - Check expiry
+    - Verify trusted signers
+  - Extract JWT embedded in certificate UID
+  - Verify JWT signature
+  - Decode JWT payload
+  - Return requested attribute to the PDP
+
+---
+
+### 3. `Cert_Generation.py`
+
+This file is used for **generating PGP certificates**.
+
+- Uses the `python-gnupg` library
+- Creates user certificates in the required format
+- Encodes user attributes (e.g., role, department) into a JWT
+- Embeds the JWT inside the certificate UID (`name_comment`)
+
+## Certificate Signing Setup
+
+Certificates are signed using GnuPG commands via the terminal.
+
+**Generate Authority Keys:**
+`gpg --full-generate-key`
+
+Two Authority keys were created using this for testing purposes and example scenarios.
+
+**Sign user certificate using authority key:**
+`gpg --local-user <authority_fingerprint> --sign-key <user_fingerprint>`
+
+This allows multiple authorities to sign a single certificate, thus enabling **decentralised trust model**.
+
+**List all signers of a certificate:**
+`gpg --list-sigs --with-colons <certificate_fingerprint>`
+
+This command is used by the PIP to retrieve and validate certificate signers.
+
+## System Workflow
+
+Request → PDP → (missing attribute) → PIP → Extract PGP → Extract JWT → Decode attributes → Return attribute → PDP evaluates → Decision
